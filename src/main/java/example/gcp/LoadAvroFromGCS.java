@@ -1,26 +1,45 @@
 package example.gcp;
 
+import com.google.api.gax.paging.Page;
 import com.google.cloud.bigquery.*;
+import com.google.cloud.storage.Blob;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class LoadAvroFromGCS {
+    public static void load() {
+        Page<Blob> blobs = ManageStorageObjects.listObjects();
+        List<String> listAvro = new ArrayList<>();
+        for (Blob blob : blobs.iterateAll()) {
+            if (blob.getName().endsWith(".avro")) {
+                listAvro.add(blob.getName());
+            }
+        }
+        for (String s: listAvro) {
+            if (runLoadAvroFromGCS(s) && runLoadAvroFromGCSNonOptionalFields(s)) {
+                ManageStorageObjects.deleteObject(s);
+            }
+        }
+    }
 
-    public static void runLoadAvroFromGCS() {
+    public static boolean runLoadAvroFromGCS(String name) {
         String datasetName = "bq_load_avro";
         String tableName = "avro_all";
-        String sourceUri = "gs://spring-bucket-programoleg1/client.avro";
-        loadAvroFromGCS(datasetName, tableName, sourceUri);
-    }
-    public static void runLoadAvroFromGCSNonOptionalFields() {
-        String datasetName = "bq_load_avro";
-        String tableName = "avro_non_optional";
-        String sourceUri = "gs://spring-bucket-programoleg1/client.avro";
-        loadAvroNonOptionalFields(datasetName, tableName, sourceUri);
+        String sourceUri = "gs://spring-bucket-programoleg1/";
+        String newStr = sourceUri + name;
+        return loadAvroFromGCS(datasetName, tableName, sourceUri);
     }
 
-    public static void loadAvroFromGCS(String datasetName, String tableName, String sourceUri) {
+    public static boolean runLoadAvroFromGCSNonOptionalFields(String name) {
+        String datasetName = "bq_load_avro";
+        String tableName = "avro_non_optional";
+        String sourceUri = "gs://spring-bucket-programoleg1/" + name;
+        return loadAvroNonOptionalFields(datasetName, tableName, sourceUri);
+    }
+
+    private static boolean loadAvroFromGCS(String datasetName, String tableName, String sourceUri) {
         try {
             BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();
 
@@ -32,17 +51,20 @@ public class LoadAvroFromGCS {
             job = job.waitFor();
             if (job.isDone()) {
                 System.out.println("Avro all from GCS successfully loaded in a table");
+                return true;
             } else {
                 System.out.println(
                         "BigQuery was unable to load into the table due to an error:"
                                 + job.getStatus().getError());
+                return false;
             }
         } catch (BigQueryException | InterruptedException e) {
             System.out.println("Column not added during load append \n" + e.toString());
+            return false;
         }
     }
 
-    public static void loadAvroNonOptionalFields(String datasetName, String tableName, String sourceUri) {
+    private static boolean loadAvroNonOptionalFields(String datasetName, String tableName, String sourceUri) {
         try {
             BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();
 
@@ -66,13 +88,16 @@ public class LoadAvroFromGCS {
             job = job.waitFor();
             if (job.isDone()) {
                 System.out.println("Avro non optional from GCS successfully loaded in a table");
+                return true;
             } else {
                 System.out.println(
                         "BigQuery was unable to load into the table due to an error:"
                                 + job.getStatus().getError());
+                return false;
             }
         } catch (BigQueryException | InterruptedException e) {
             System.out.println("Column not added during load append \n" + e.toString());
+            return false;
         }
     }
 
