@@ -27,8 +27,7 @@ public class LoadAvroFromGCS {
     public static boolean runLoadAvroFromGCS(String name) {
         String datasetName = "bq_load_avro";
         String tableName = "avro_all";
-        String sourceUri = "gs://spring-bucket-programoleg1/";
-        String newStr = sourceUri + name;
+        String sourceUri = "gs://spring-bucket-programoleg1/" + name;
         return loadAvroFromGCS(datasetName, tableName, sourceUri);
     }
 
