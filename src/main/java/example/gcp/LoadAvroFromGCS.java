@@ -59,7 +59,6 @@ public class LoadAvroFromGCS {
     private static String projectId = "buoyant-braid-293112";
     private static String region = "europe-west4";
     private static String subscription = "cloud-run-spring";
-    private static String topicName = "projects/buoyant-braid-293112/topics/storage-run";
 
     private static String bucketName = "spring-bucket-programoleg1";
 
@@ -67,7 +66,6 @@ public class LoadAvroFromGCS {
     private static BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();
 
     private static org.apache.avro.Schema schema;
-
 
     private static final Log LOGGER = LogFactory.getLog(LoadAvroFromGCS.class);
 
@@ -102,21 +100,20 @@ public class LoadAvroFromGCS {
                 }
             };
 
-    //        public static void pipeline() {
-    public static void main(String... args) {
+    public static boolean pipeline(String name) {
         TableReference tableReferenceAll = (new TableReference()).setDatasetId(datasetName).setProjectId(projectId).setTableId(table1);
         TableReference tableReferenceNonOptional = (new TableReference()).setDatasetId(datasetName).setProjectId(projectId).setTableId(table2);
 
         DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
-        options.setStagingLocation("gs://" + bucketName + "/staging");
-        options.setTempLocation("gs://" + bucketName + "/tmp");
+        options.setStagingLocation("gs://spring-bucket-programoleg1/staging");
+        options.setTempLocation("gs://spring-bucket-programoleg1/tmp");
         options.setProject(projectId);
         options.setRunner(DataflowRunner.class);
         options.setRegion(region);
 
         Pipeline pipeline = Pipeline.create(options);
 
-        PCollection<Client> records = pipeline.apply("Read Avro files", AvroIO.read(Client.class).from("gs://" + bucketName + "/client2.avro"));
+        PCollection<Client> records = pipeline.apply("Read Avro files", AvroIO.read(Client.class).from("gs://" + bucketName + "/" + name + ".avro"));
 
         TableSchema ts = BigQueryAvroUtils.getTableSchema(Client.SCHEMA$);
         TableSchema tsno = BigQueryAvroUtils.getOnlyNonOptionalTableSchema(Client.SCHEMA$);
@@ -138,13 +135,16 @@ public class LoadAvroFromGCS {
                         .withFormatFunction(NON_OPTIONAL_TABLE_ROW_PARSER));
 
         pipeline.run().waitUntilFinish();
+        return true;
     }
 
-
-    public static void load(String name, Long generation) {
+    public static boolean load(String name, Long generation) {
         Storage storage = StorageOptions.getDefaultInstance().getService();
+        LOGGER.warn("storage: " + storage);
         BlobId blobId = BlobId.of(bucketName, name, generation);
+        LOGGER.warn("blobId: " + blobId);
         Blob blob = storage.get(blobId);
+        LOGGER.warn("blob: " + blob);
         String value = new String(blob.getContent());
         System.out.println("VALUE: " + value);
         SeekableByteArrayInput input = new SeekableByteArrayInput(blob.getContent());
@@ -153,17 +153,13 @@ public class LoadAvroFromGCS {
             DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
             DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(input, datumReader);
             schema = dataFileReader.getSchema();
-//            System.out.println("SCHEMA: " + schema);
-//            pipeline(name);
+            return pipeline(name);
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
 
-        System.exit(0);
+        return true;
 
-        if (runLoadAvroFromGCS(name) && runLoadAvroFromGCSNonOptionalFields(name)) {
-            ManageStorageObjects.deleteObject(name);
-        }
     }
 
     public static boolean runLoadAvroFromGCS(String name) {
