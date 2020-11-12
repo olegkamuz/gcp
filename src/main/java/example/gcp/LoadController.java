@@ -14,7 +14,9 @@ import java.util.Base64;
 @RestController
 public class LoadController {
     private Log LOGGER = LogFactory.getLog(LoadController.class);
+
     @PostMapping(value = "/load", consumes = MediaType.APPLICATION_JSON_VALUE)
+
     public ResponseEntity load(@RequestBody Body body) {
         LOGGER.warn("Start load method!");
 
