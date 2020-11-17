@@ -50,7 +50,7 @@ public class LoadController {
             return new ResponseEntity(HttpStatus.OK);
         }
 
-        return new ResponseEntity(HttpStatus.OK);
+        return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @GetMapping("/")
     @ResponseBody
