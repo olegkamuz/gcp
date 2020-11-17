@@ -1,6 +1,6 @@
 Main idea:
 
-<a href="url"><img src="diagram2.png" height="600" width="700" ></a>
+<a href="url"><img src="diagram2.jpg" height="600" width="700" ></a>
 
 Description:
 
