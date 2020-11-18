@@ -24,7 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.avro.Schema;
+import org.springframework.stereotype.Service;
 
+@Service
 public class LoadAvroFromGCS {
     private static final Log LOGGER = LogFactory.getLog(LoadAvroFromGCS.class);
     private static String table_avro_all = "avro_all";
@@ -34,16 +36,16 @@ public class LoadAvroFromGCS {
     private static String bucketName = "spring-bucket-programoleg1";
     private static Schema schemaAll = null;
     private static com.google.cloud.bigquery.Schema schemaBQNonOptional = null;
-    private static BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();
-    private static Storage storage = StorageOptions.getDefaultInstance().getService();
+    private BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();
+    private Storage storage = StorageOptions.getDefaultInstance().getService();
 
-    private static Blob getBlob(String name, Long generation) {
+    private Blob getBlob(String name, Long generation) {
         BlobId blobId = BlobId.of(bucketName, name, generation);
         LOGGER.info("blobId: " + blobId);
         return storage.get(blobId);
     }
 
-    public static boolean load(String name, Long generation) {
+    public boolean load(String name, Long generation) {
         Blob blob = getBlob(name, generation);
         LOGGER.info("blob: " + blob);
 
@@ -55,7 +57,7 @@ public class LoadAvroFromGCS {
         return runLoadAvroFromGCS(name) && runLoadAvroFromGCSNonOptionalFields(name) && deleteObject(name);
     }
 
-    private static com.google.cloud.bigquery.Schema getSchemaBQNonOptional() {
+    private com.google.cloud.bigquery.Schema getSchemaBQNonOptional() {
         List<com.google.cloud.bigquery.Field> fieldsBQ = new ArrayList<>();
         for (Schema.Field f : schemaAll.getFields()) {
             if (f.schema().isNullable()) {
@@ -67,7 +69,7 @@ public class LoadAvroFromGCS {
         return com.google.cloud.bigquery.Schema.of(fieldsBQ);
     }
 
-    private static Schema getSchemaAll(SeekableByteArrayInput input) {
+    private Schema getSchemaAll(SeekableByteArrayInput input) {
         try {
             DatumReader<Client> datumReader = new SpecificDatumReader<>();
             DataFileReader<Client> dataFileReader = new DataFileReader<>(input, datumReader);
@@ -78,18 +80,17 @@ public class LoadAvroFromGCS {
         return null;
     }
 
-
-    private static boolean runLoadAvroFromGCS(String name) {
+    private boolean runLoadAvroFromGCS(String name) {
         String sourceUri = bucket + name;
         return loadAvroFromGCS(datasetName, table_avro_all, sourceUri);
     }
 
-    private static boolean runLoadAvroFromGCSNonOptionalFields(String name) {
+    private boolean runLoadAvroFromGCSNonOptionalFields(String name) {
         String sourceUri = bucket + name;
         return loadAvroNonOptionalFields(datasetName, table_avro_non_optional, sourceUri);
     }
 
-    private static boolean loadAvroFromGCS(String datasetName, String tableName, String sourceUri) {
+    private boolean loadAvroFromGCS(String datasetName, String tableName, String sourceUri) {
         try {
             TableId tableId = TableId.of(datasetName, tableName);
 
@@ -110,7 +111,7 @@ public class LoadAvroFromGCS {
         }
     }
 
-    private static boolean loadAvroNonOptionalFields(String datasetName, String tableName, String sourceUri) {
+    private boolean loadAvroNonOptionalFields(String datasetName, String tableName, String sourceUri) {
         try {
             if (schemaBQNonOptional == null) {
                 schemaBQNonOptional = getSchemaBQNonOptional();
@@ -137,7 +138,7 @@ public class LoadAvroFromGCS {
         }
     }
 
-    private static boolean deleteObject(String objectName) {
+    private boolean deleteObject(String objectName) {
         if (storage.delete(bucketName, objectName)) {
             LOGGER.info("Object " + objectName + " was deleted from " + bucketName);
             return true;
