@@ -12,6 +12,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import lombok.Data;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.SeekableByteArrayInput;
 import org.apache.avro.io.DatumReader;
@@ -27,13 +28,13 @@ import org.apache.avro.Schema;
 import org.springframework.stereotype.Service;
 
 @Service
+@Data
 public class LoadAvroFromGCS {
     private static final Log LOGGER = LogFactory.getLog(LoadAvroFromGCS.class);
     private static String table_avro_all = "avro_all";
     private static String table_avro_non_optional = "avro_non_optional";
-    private static String datasetName = "bq_load_avro";
-    private static String bucket = "gs://spring-bucket-programoleg1/";
-    private static String bucketName = "spring-bucket-programoleg1";
+    private String datasetName = "bq_load_avro";
+    private String bucketName = "spring-bucket-programoleg1";
     private static Schema schemaAll = null;
     private static com.google.cloud.bigquery.Schema schemaBQNonOptional = null;
     private BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();
@@ -81,12 +82,12 @@ public class LoadAvroFromGCS {
     }
 
     private boolean runLoadAvroFromGCS(String name) {
-        String sourceUri = bucket + name;
+        String sourceUri = "gs://" + bucketName + "/" + name;
         return loadAvroFromGCS(datasetName, table_avro_all, sourceUri);
     }
 
     private boolean runLoadAvroFromGCSNonOptionalFields(String name) {
-        String sourceUri = bucket + name;
+        String sourceUri = "gs://" + bucketName + "/" + name;
         return loadAvroNonOptionalFields(datasetName, table_avro_non_optional, sourceUri);
     }
 
