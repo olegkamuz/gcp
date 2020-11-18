@@ -1,0 +1,12 @@
+{
+   "id": 1,
+   "name": "Morty",
+   "phone": null,
+   "address": null
+}
+{
+   "id": 2,
+   "name": "Rick",
+   "phone": "97868265",
+   "address": "NY"
+}
