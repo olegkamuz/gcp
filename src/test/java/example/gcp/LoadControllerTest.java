@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import example.gcp.service.utils.LoadAvroFromGCSImpl;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ public class LoadControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
     @MockBean
-    private LoadAvroFromGCS loadAvroFromGCS;
+    private LoadAvroFromGCSImpl loadAvroFromGCSImpl;
 
     @Test
     public void shouldReturnBadRequestStatusMessageNull() throws Exception {
@@ -99,7 +100,7 @@ public class LoadControllerTest {
 
         JsonObject data = JsonParser.parseString(jsonNotEncoded).getAsJsonObject();
 
-        when(loadAvroFromGCS.load(data.get("name").getAsString(), data.get("generation").getAsLong())).thenReturn(false);
+        when(loadAvroFromGCSImpl.load(data.get("name").getAsString(), data.get("generation").getAsLong())).thenReturn(false);
         this.mockMvc.perform(post("/load")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
@@ -119,7 +120,7 @@ public class LoadControllerTest {
 
         JsonObject data = JsonParser.parseString(jsonNotEncoded).getAsJsonObject();
 
-        when(loadAvroFromGCS.load(data.get("name").getAsString(), data.get("generation").getAsLong())).thenReturn(true);
+        when(loadAvroFromGCSImpl.load(data.get("name").getAsString(), data.get("generation").getAsLong())).thenReturn(true);
         this.mockMvc.perform(post("/load")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))

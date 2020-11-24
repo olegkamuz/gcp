@@ -1,4 +1,4 @@
-package example.gcp;
+package example.gcp.service.utils;
 
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
@@ -12,27 +12,28 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import example.gcp.Client;
+import example.gcp.service.LoadAvroFromGCS;
+import example.gcp.service.utils.AvroToBigQueryHelper;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.SeekableByteArrayInput;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.avro.Schema;
-import org.springframework.stereotype.Service;
-
 @Service
 @Data
-public class LoadAvroFromGCS {
-    private static final Log LOGGER = LogFactory.getLog(LoadAvroFromGCS.class);
-    private static String table_avro_all = "avro_all";
-    private static String table_avro_non_optional = "avro_non_optional";
+@Slf4j
+public class LoadAvroFromGCSImpl implements LoadAvroFromGCS {
+    private static final String TABLE_AVRO_ALL = "avro_all";
+    private static final String TABLE_AVRO_NON_OPTIONAL = "avro_non_optional";
     private String datasetName = "bq_load_avro";
     private String bucketName = "spring-bucket-programoleg1";
     private static Schema schemaAll = null;
@@ -42,13 +43,13 @@ public class LoadAvroFromGCS {
 
     private Blob getBlob(String name, Long generation) {
         BlobId blobId = BlobId.of(bucketName, name, generation);
-        LOGGER.info("blobId: " + blobId);
+        log.info("blobId: " + blobId);
         return storage.get(blobId);
     }
 
     public boolean load(String name, Long generation) {
         Blob blob = getBlob(name, generation);
-        LOGGER.info("blob: " + blob);
+        log.info("blob: " + blob);
 
         SeekableByteArrayInput input = new SeekableByteArrayInput(blob.getContent());
 
@@ -83,12 +84,12 @@ public class LoadAvroFromGCS {
 
     private boolean runLoadAvroFromGCS(String name) {
         String sourceUri = "gs://" + bucketName + "/" + name;
-        return loadAvroFromGCS(datasetName, table_avro_all, sourceUri);
+        return loadAvroFromGCS(datasetName, TABLE_AVRO_ALL, sourceUri);
     }
 
     private boolean runLoadAvroFromGCSNonOptionalFields(String name) {
         String sourceUri = "gs://" + bucketName + "/" + name;
-        return loadAvroNonOptionalFields(datasetName, table_avro_non_optional, sourceUri);
+        return loadAvroNonOptionalFields(datasetName, TABLE_AVRO_NON_OPTIONAL, sourceUri);
     }
 
     private boolean loadAvroFromGCS(String datasetName, String tableName, String sourceUri) {
@@ -100,14 +101,14 @@ public class LoadAvroFromGCS {
             Job job = bigquery.create(JobInfo.of(loadConfig));
             job = job.waitFor();
             if (job.isDone()) {
-                LOGGER.info("Avro all from GCS successfully loaded in a table");
+                log.info("Avro all from GCS successfully loaded in a table");
                 return true;
             } else {
-                LOGGER.warn("BigQuery was unable to load into the table due to an error:" + job.getStatus().getError());
+                log.warn("BigQuery was unable to load into the table due to an error:" + job.getStatus().getError());
                 return false;
             }
         } catch (BigQueryException | InterruptedException e) {
-            LOGGER.warn("Column not added during load append \n" + e.toString());
+            log.warn("Column not added during load append \n" + e.toString());
             return false;
         }
     }
@@ -127,24 +128,24 @@ public class LoadAvroFromGCS {
             Job job = bigquery.create(JobInfo.of(loadConfig));
             job = job.waitFor();
             if (job.isDone()) {
-                LOGGER.info("Avro non optional from GCS successfully loaded in a table");
+                log.info("Avro non optional from GCS successfully loaded in a table");
                 return true;
             } else {
-                LOGGER.warn("BigQuery was unable to load into the table due to an error:" + job.getStatus().getError());
+                log.warn("BigQuery was unable to load into the table due to an error:" + job.getStatus().getError());
                 return false;
             }
         } catch (BigQueryException | InterruptedException e) {
-            LOGGER.warn("Column not added during load append \n" + e.toString());
+            log.warn("Column not added during load append \n" + e.toString());
             return false;
         }
     }
 
     private boolean deleteObject(String objectName) {
         if (storage.delete(bucketName, objectName)) {
-            LOGGER.info("Object " + objectName + " was deleted from " + bucketName);
+            log.info("Object " + objectName + " was deleted from " + bucketName);
             return true;
         }
-        LOGGER.warn("Deletion unsuccessful");
+        log.warn("Deletion unsuccessful");
         return false;
     }
 }

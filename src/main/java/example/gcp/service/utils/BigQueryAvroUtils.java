@@ -1,4 +1,4 @@
-package example.gcp;
+package example.gcp.service.utils;
 
 import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.api.services.bigquery.model.TableRow;
@@ -33,7 +33,7 @@ import static com.google.common.base.Verify.verify;
 import static com.google.common.base.Verify.verifyNotNull;
 import com.google.common.io.BaseEncoding;
 
-class BigQueryAvroUtils {
+public class BigQueryAvroUtils {
     private BigQueryAvroUtils() {
     }
 
@@ -172,7 +172,7 @@ class BigQueryAvroUtils {
         return row;
     }
 
-    static TableRow convertSpecificRecordToTableRow(SpecificRecord record, TableSchema schema) {
+    public static TableRow convertSpecificRecordToTableRow(SpecificRecord record, TableSchema schema) {
         return convertSpecificRecordToTableRow(record, schema.getFields());
     }
 

@@ -1,4 +1,4 @@
-package example.gcp;
+package example.gcp.service.utils;
 
 import com.google.api.services.bigquery.model.TableReference;
 import com.google.api.services.bigquery.model.TableRow;
@@ -6,6 +6,8 @@ import com.google.api.services.bigquery.model.TableSchema;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.bigquery.Schema;
+import example.gcp.Client;
+import example.gcp.service.LoadAvroFromGCS;
 import org.apache.avro.specific.SpecificRecord;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
@@ -17,8 +19,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets;
 import static org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED;
 import static org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition.WRITE_APPEND;
 
-public class LoadDataflow {
+public class LoadDataflowImpl implements LoadAvroFromGCS {
 
     private static String table1 = "avro_all";
     private static String table2 = "avro_non_optional";
@@ -45,8 +45,6 @@ public class LoadDataflow {
 
     private static org.apache.avro.Schema schema;
 
-    private static final Log LOGGER = LogFactory.getLog(LoadAvroFromGCS.class);
-
     public static TableRow convertJsonToTableRow(String json) {
         TableRow row;
         try (InputStream inputStream =
@@ -61,22 +59,12 @@ public class LoadDataflow {
     }
 
     private static final SerializableFunction TABLE_ROW_PARSER =
-            new SerializableFunction<SpecificRecord, TableRow>() {
-                @Override
-                public TableRow apply(SpecificRecord specificRecord) {
-                    return BigQueryAvroUtils.convertSpecificRecordToTableRow(
-                            specificRecord, BigQueryAvroUtils.getTableSchema(Client.SCHEMA$));
-                }
-            };
+            (SerializableFunction<SpecificRecord, TableRow>) specificRecord -> BigQueryAvroUtils.convertSpecificRecordToTableRow(
+                    specificRecord, BigQueryAvroUtils.getTableSchema(Client.SCHEMA$));
 
     private static final SerializableFunction NON_OPTIONAL_TABLE_ROW_PARSER =
-            new SerializableFunction<SpecificRecord, TableRow>() {
-                @Override
-                public TableRow apply(SpecificRecord specificRecord) {
-                    return BigQueryAvroUtils.convertSpecificRecordToTableRow(
-                            specificRecord, BigQueryAvroUtils.getOnlyNonOptionalTableSchema(Client.SCHEMA$));
-                }
-            };
+            (SerializableFunction<SpecificRecord, TableRow>) specificRecord -> BigQueryAvroUtils.convertSpecificRecordToTableRow(
+                    specificRecord, BigQueryAvroUtils.getOnlyNonOptionalTableSchema(Client.SCHEMA$));
 
     public static boolean pipeline(String name) {
         TableReference tableReferenceAll = (new TableReference()).setDatasetId(datasetName).setProjectId(projectId).setTableId(table1);
@@ -114,5 +102,10 @@ public class LoadDataflow {
 
         pipeline.run().waitUntilFinish();
         return true;
+    }
+
+    @Override
+    public boolean load(String name, Long generation) {
+        return pipeline(name);
     }
 }

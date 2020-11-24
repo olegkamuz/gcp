@@ -9,7 +9,7 @@
         <version>2.3.4.RELEASE</version>
         <relativePath/>
     </parent>
-    <groupId>example</groupId>
+    <groupId>example.gcp</groupId>
     <artifactId>gcp</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>gcp</name>
@@ -115,6 +115,12 @@
                     <artifactId>junit-vintage-engine</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>RELEASE</version>
+            <scope>compile</scope>
         </dependency>
 
 

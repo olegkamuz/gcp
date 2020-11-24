@@ -1,4 +1,4 @@
-package example.gcp;
+package example.gcp.service.utils;
 
 import com.google.cloud.bigquery.StandardSQLTypeName;
 import org.apache.avro.Schema;

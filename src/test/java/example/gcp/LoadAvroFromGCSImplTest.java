@@ -9,8 +9,7 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.testing.RemoteStorageHelper;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import example.gcp.service.utils.LoadAvroFromGCSImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,9 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class LoadAvroFromGCSTest {
+public class LoadAvroFromGCSImplTest {
     @Autowired
-    private LoadAvroFromGCS loadAvroFromGCS;
+    private LoadAvroFromGCSImpl loadAvroFromGCSImpl;
 
     private BigQuery bigquery;
     private Storage storage;
@@ -41,8 +40,6 @@ public class LoadAvroFromGCSTest {
     private BucketInfo bucketInfo;
     private BlobInfo blobInfo;
     private Blob blob;
-
-    private final Log LOGGER = LogFactory.getLog(LoadController.class);
 
     @BeforeEach
     void setUp() throws Exception {
@@ -74,12 +71,12 @@ public class LoadAvroFromGCSTest {
 
     @Test
     public void shouldReturnTrueBigQueryTablesHaveDone() throws Exception {
-        loadAvroFromGCS.setBigquery(bigquery);
-        loadAvroFromGCS.setStorage(storage);
-        loadAvroFromGCS.setBucketName(bucket);
-        loadAvroFromGCS.setDatasetName(dataset);
+        loadAvroFromGCSImpl.setBigquery(bigquery);
+        loadAvroFromGCSImpl.setStorage(storage);
+        loadAvroFromGCSImpl.setBucketName(bucket);
+        loadAvroFromGCSImpl.setDatasetName(dataset);
 
-        assertTrue(loadAvroFromGCS.load(name, blob.getGeneration()));
+        assertTrue(loadAvroFromGCSImpl.load(name, blob.getGeneration()));
     }
 
 }

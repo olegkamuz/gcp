@@ -1,9 +1,7 @@
 package example.gcp;
 
-
 import lombok.Data;
 
-//@Data
 public class Body {
 
     private Message message;
